@@ -1,0 +1,22 @@
+[project]
+name = "prx-practical-lab"
+version = "2025.0.1"
+authors = [
+  {name = "Paul Thevenon", email = "thevenon@recherche.enac.fr"},
+]
+requires-python = ">= 3.12"
+dependencies = [
+  "netcdf4",
+  "pip",
+  "jupyter",
+  "xarray",
+  "ipykernel",
+  "scipy",
+  "matplotlib",
+  "dask",
+  "numpy",
+  "pandas",
+  "cartopy",
+  "ipympl",
+  "nbstripout",
+]
