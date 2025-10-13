@@ -19,4 +19,9 @@ dependencies = [
   "cartopy",
   "ipympl",
   "nbstripout",
+  "ruff",
+  "pytest",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
