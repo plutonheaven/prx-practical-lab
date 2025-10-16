@@ -21,6 +21,7 @@ dependencies = [
   "nbstripout",
   "ruff",
   "pytest",
+  "tqdm",
 ]
 
 [tool.pytest.ini_options]
