@@ -1,8 +1,13 @@
 import pandas as pd
 import numpy as np
-import pyproj
+# import pyproj
 import json
 
+EARTH_FLATTENINGFACTOR = 1 / 298.257223563
+EARTH_SEMIMAJORAXIS_M = 6378137.0
+EARTH_ECCENTRICITY = np.sqrt(
+    2 * EARTH_FLATTENINGFACTOR - EARTH_FLATTENINGFACTOR**2
+)
 
 # def check_answer(answer, correct_value):
 #     print("Sucess!!") if (answer == correct_value).all() else print("Try again...")
@@ -25,11 +30,36 @@ def parse_prx_metadata(prx_file):
         metadata = json.loads(f.readline().replace("# ", ""))
     return metadata
 
-
-def ecef_to_geodetic(x, y, z):
-    transformer = pyproj.Transformer.from_crs("epsg:4978", "epsg:4326", always_xy=True)
-    longitude, latitude, altitude = transformer.transform(x, y, z)
-    return latitude, longitude, altitude
+def ecef_to_geodetic(pos_ecef_x: np.array, pos_ecef_y: np.array, pos_ecef_z: np.array):
+    """
+    pos_ecef_{x,y,z}: np.array of shape (n,)
+    Reference:
+    GNSS data Processing, Vol. I: Fundamentals and Algorithms. Equations (B.4),(B.5),(B.6)
+    """
+    p = np.linalg.norm(np.array([pos_ecef_x, pos_ecef_y]), axis=0)
+    longitude_rad = np.arctan2(pos_ecef_y, pos_ecef_x)
+    precision_rad = np.full(
+        pos_ecef_x.shape, 1.6e-10
+    )  # desired precision in radians, corresponds to 1 mm
+    delta_phi_rad = np.full(
+        pos_ecef_x.shape, 1.0
+    )  # initialization to a value larger than precision
+    altitude_m = np.zeros(pos_ecef_x.shape)
+    latitude_rad = np.arctan2(pos_ecef_z, p * (1 - EARTH_ECCENTRICITY**2))
+    while (delta_phi_rad > precision_rad).any():
+        n = EARTH_SEMIMAJORAXIS_M / np.sqrt(
+            1 - EARTH_ECCENTRICITY**2 * np.sin(latitude_rad) ** 2
+        )
+        # altitude_previous = altitude_m
+        altitude_m = p / np.cos(latitude_rad) - n
+        # delta_h_m = np.abs(altitude_m - altitude_previous)
+        latitude_prev = latitude_rad
+        latitude_rad = np.arctan2(
+            pos_ecef_z,
+            p * (1 - n * EARTH_ECCENTRICITY**2 / (n + altitude_m)),
+        )
+        delta_phi_rad = np.abs(latitude_rad - latitude_prev)
+    return latitude_rad, longitude_rad, altitude_m
 
 
 # def df_add_geodetic_coord(df: pd.DataFrame):
@@ -114,24 +144,34 @@ def ecef_to_geodetic(x, y, z):
 #     return [lat, lon, alt]
 
 
-def ecef_to_enu_matrix(lat, lon, alt):
+def ecef_to_enu_matrix(lat_rad, lon_rad):
     # ESA Book - eq (B.11)
     R = np.array(
         [
-            [-np.sin(lon), np.cos(lon), 0],
-            [-np.cos(lon) * np.sin(lat), -np.sin(lon) * np.sin(lat), np.cos(lat)],
-            [np.cos(lon) * np.cos(lat), np.sin(lon) * np.cos(lat), np.sin(lat)],
+            [-np.sin(lon_rad), np.cos(lon_rad), 0],
+            [
+                -np.cos(lon_rad) * np.sin(lat_rad),
+                -np.sin(lon_rad) * np.sin(lat_rad),
+                np.cos(lat_rad),
+            ],
+            [
+                np.cos(lon_rad) * np.cos(lat_rad),
+                np.sin(lon_rad) * np.cos(lat_rad),
+                np.sin(lat_rad),
+            ],
         ]
     )
     return R
 
-def ecef_to_enu(xyz, xyz_ref):
 
-    (lat, lon, alt) = ecef_to_geodetic(
-        rx_pos_ecef[0],
-        rx_pos_ecef[1],
-        rx_pos_ecef[2],
+def ecef_to_enu(xyz, xyz_ref):
+    (lat_rad, lon_rad, _) = ecef_to_geodetic(
+        xyz_ref[0],
+        xyz_ref[1],
+        xyz_ref[2],
     )
-    R_ecef_to_enu = ecef_to_enu_matrix(np.radians(lat), np.radians(lon), alt)
-    R_ecef_to_enu @ results
+    R_ecef_to_enu = ecef_to_enu_matrix(lat_rad, lon_rad)
+    return R_ecef_to_enu @ (xyz - xyz_ref)
+
+
 
