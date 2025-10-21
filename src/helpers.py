@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
+
 # import pyproj
 import json
 
 EARTH_FLATTENINGFACTOR = 1 / 298.257223563
 EARTH_SEMIMAJORAXIS_M = 6378137.0
-EARTH_ECCENTRICITY = np.sqrt(
-    2 * EARTH_FLATTENINGFACTOR - EARTH_FLATTENINGFACTOR**2
-)
+EARTH_ECCENTRICITY = np.sqrt(2 * EARTH_FLATTENINGFACTOR - EARTH_FLATTENINGFACTOR**2)
 
 # def check_answer(answer, correct_value):
 #     print("Sucess!!") if (answer == correct_value).all() else print("Try again...")
@@ -29,6 +28,7 @@ def parse_prx_metadata(prx_file):
     with open(prx_file, "r") as f:
         metadata = json.loads(f.readline().replace("# ", ""))
     return metadata
+
 
 def ecef_to_geodetic(pos_ecef_x: np.array, pos_ecef_y: np.array, pos_ecef_z: np.array):
     """
@@ -172,6 +172,3 @@ def ecef_to_enu(xyz, xyz_ref):
     )
     R_ecef_to_enu = ecef_to_enu_matrix(lat_rad, lon_rad)
     return R_ecef_to_enu @ (xyz - xyz_ref)
-
-
-
