@@ -22,6 +22,7 @@ dependencies = [
   "ruff",
   "pytest",
   "tqdm",
+  "pyarrow",
 ]
 
 [tool.pytest.ini_options]

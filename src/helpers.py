@@ -1,33 +1,13 @@
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
-# import pyproj
-import json
+dateFmt = mdates.DateFormatter("%H:%M")  # date format
 
 EARTH_FLATTENINGFACTOR = 1 / 298.257223563
 EARTH_SEMIMAJORAXIS_M = 6378137.0
 EARTH_ECCENTRICITY = np.sqrt(2 * EARTH_FLATTENINGFACTOR - EARTH_FLATTENINGFACTOR**2)
-
-# def check_answer(answer, correct_value):
-#     print("Sucess!!") if (answer == correct_value).all() else print("Try again...")
-
-
-# def prx_csv_to_pandas(filepath: str):
-#     """
-#     Read a PRX_CSV file and convert it to pandas DataFrame
-#     """
-#     data_prx = pd.read_csv(
-#         filepath,
-#         comment="#",
-#         parse_dates=["time_of_reception_in_receiver_time"],
-#     )
-#     return data_prx
-
-
-def parse_prx_metadata(prx_file):
-    with open(prx_file, "r") as f:
-        metadata = json.loads(f.readline().replace("# ", ""))
-    return metadata
 
 
 def ecef_to_geodetic(pos_ecef_x: np.array, pos_ecef_y: np.array, pos_ecef_z: np.array):
@@ -62,88 +42,6 @@ def ecef_to_geodetic(pos_ecef_x: np.array, pos_ecef_y: np.array, pos_ecef_z: np.
     return latitude_rad, longitude_rad, altitude_m
 
 
-# def df_add_geodetic_coord(df: pd.DataFrame):
-#     geodetic = ecef_to_geodetic(
-#         df["estimated_position_ecef_x_m"],
-#         df["estimated_position_ecef_y_m"],
-#         df["estimated_position_ecef_z_m"],
-#     )
-#     coords = pd.Series([geodetic[0], geodetic[1], geodetic[2]])
-#     return coords
-
-
-# # from https://stackoverflow.com/a/65048500
-# import scipy.spatial.transform
-# def geodetic_to_enu(lat, lon, alt, lat_origin, lon_origin, alt_origin):
-#     transformer = pyproj.Transformer.from_crs(
-#         {"proj": "latlong", "ellps": "WGS84", "datum": "WGS84"},
-#         {"proj": "geocent", "ellps": "WGS84", "datum": "WGS84"},
-#     )
-#     x, y, z = transformer.transform(lon, lat, alt, radians=False)
-#     x_org, y_org, z_org = transformer.transform(
-#         lon_origin, lat_origin, alt_origin, radians=False
-#     )
-#     vec = np.array([[x - x_org, y - y_org, z - z_org]]).T
-
-#     rot1 = scipy.spatial.transform.Rotation.from_euler(
-#         "x", -(90 - lat_origin), degrees=True
-#     ).as_matrix()  # angle*-1 : left handed *-1
-#     rot3 = scipy.spatial.transform.Rotation.from_euler(
-#         "z", -(90 + lon_origin), degrees=True
-#     ).as_matrix()  # angle*-1 : left handed *-1
-
-#     rotMatrix = rot1.dot(rot3)
-
-#     enu = rotMatrix.dot(vec).T.ravel()
-#     return enu.T
-
-
-# def df_add_enu_coord(df: pd.DataFrame, lat_origin, lon_origin, alt_origin):
-#     enu = geodetic_to_enu(
-#         df["estimated_lat_deg"],
-#         df["estimated_lon_deg"],
-#         df["estimated_alt_m"],
-#         lat_origin,
-#         lon_origin,
-#         alt_origin,
-#     )
-#     coords = pd.Series([enu[0], enu[1], enu[2]])
-#     return coords
-
-
-# def enu_to_geodetic(x, y, z, lat_origin, lon_origin, alt_origin):
-#     transformer1 = pyproj.Transformer.from_crs(
-#         {"proj": "latlong", "ellps": "WGS84", "datum": "WGS84"},
-#         {"proj": "geocent", "ellps": "WGS84", "datum": "WGS84"},
-#     )
-#     transformer2 = pyproj.Transformer.from_crs(
-#         {"proj": "geocent", "ellps": "WGS84", "datum": "WGS84"},
-#         {"proj": "latlong", "ellps": "WGS84", "datum": "WGS84"},
-#     )
-
-#     x_org, y_org, z_org = transformer1.transform(
-#         lon_origin, lat_origin, alt_origin, radians=False
-#     )
-#     ecef_org = np.array([[x_org, y_org, z_org]]).T
-
-#     rot1 = scipy.spatial.transform.Rotation.from_euler(
-#         "x", -(90 - lat_origin), degrees=True
-#     ).as_matrix()  # angle*-1 : left handed *-1
-#     rot3 = scipy.spatial.transform.Rotation.from_euler(
-#         "z", -(90 + lon_origin), degrees=True
-#     ).as_matrix()  # angle*-1 : left handed *-1
-
-#     rotMatrix = rot1.dot(rot3)
-
-#     ecefDelta = rotMatrix.T.dot(np.array([[x, y, z]]).T)
-#     ecef = ecefDelta + ecef_org
-#     lon, lat, alt = transformer2.transform(
-#         ecef[0, 0], ecef[1, 0], ecef[2, 0], radians=False
-#     )
-
-#     return [lat, lon, alt]
-
-
 def ecef_to_enu_matrix(lat_rad, lon_rad):
     # ESA Book - eq (B.11)
     R = np.array(
@@ -172,3 +70,149 @@ def ecef_to_enu(xyz, xyz_ref):
     )
     R_ecef_to_enu = ecef_to_enu_matrix(lat_rad, lon_rad)
     return R_ecef_to_enu @ (xyz - xyz_ref)
+
+
+def compute_enu_pos_error(results_df, ref_pos):
+    """
+    Compute the position error in the ENU frame, add the ENU position error to the results_df as new columns.
+
+    Inputs:
+    - results_df: pd.DataFrame, dataframe containing the columns "epochs", "pos_x", "pos_y", "pos_z"
+    - ref_pos: list, true position of the receiver in ECEF frame
+
+    Outputs:
+    - results_df: same pd.Dataframe with additional columns "pos_e", "pos_n", "pos_u"
+    """
+    n_epoch = len(results_df)
+    enu_est = np.empty((n_epoch, 3))
+    for idx_epoch in range(n_epoch):
+        enu_est[idx_epoch, :] = ecef_to_enu(
+            results_df.iloc[idx_epoch][["pos_x", "pos_y", "pos_z"]], ref_pos
+        )
+    results_df = pd.concat(
+        [results_df, pd.DataFrame(enu_est, columns=["pos_e", "pos_n", "pos_u"])],
+        axis=1,
+    )
+    return results_df
+
+
+def plot_enu_error(
+    filepath_save: str, results_df: pd.DataFrame, label: str, hor_axis_lim: float = 3.0
+):
+    """
+    Save a figure of the ENU error. One subplot for horizontal error point cloud. Another subplot for vertical error time series
+
+    Inputs:
+    - filepath_save: str, location for saving the figure. Ex: "figures/enu.png"
+    - results_df: pd.DataFrame, dataframe containing the columns "epochs", "pos_e", "pos_n", "pos_u"
+    - ref_pos: list, true position of the receiver in ECEF frame
+    - label: str, plot label
+    - hor_axis_lim: float, used to limit the horizontal error axes
+    """
+    fig, ax = plt.subplots(
+        1,
+        2,
+        figsize=(10, 5),
+        gridspec_kw={"width_ratios": [3, 3]},
+        layout="constrained",
+    )
+    ax[0].scatter(x=results_df["pos_e"], y=results_df["pos_n"], marker=".", label=label)
+    ax[0].legend()
+    ax[0].grid()
+    ax[0].set_xlim(-hor_axis_lim, hor_axis_lim)
+    ax[0].set_ylim(-hor_axis_lim, hor_axis_lim)
+    ax[0].set_xlabel(
+        "East position error [m]",
+    )
+    ax[0].set_ylabel("North position error [m]")
+    ax[1].scatter(x=results_df["epoch"], y=results_df["pos_u"], marker=".", label=label)
+    ax[1].legend()
+    ax[1].grid()
+    ax[1].set_xlabel("epoch")
+    ax[1].set_ylabel("Up position error [m]")
+    ax[1].tick_params(axis="x", labelrotation=45)
+    ax[1].xaxis.set_major_formatter(dateFmt)
+    plt.savefig(filepath_save)
+
+
+def plot_enu_error_cdf(filepath_save, results_df, label):
+    """
+    Save a figure of the ENU error cumulative density function. One subplot for the horizontal error, another for the vertical error.
+
+    Inputs:
+    - filepath_save: str, location for saving the figure. Ex: "figures/enu.png"
+    - results_df: pd.DataFrame, dataframe containing the columns "epochs", "pos_e", "pos_n", "pos_u"
+    - ref_pos: list, true position of the receiver in ECEF frame
+    - label: str, plot label
+    - hor_axis_lim: float, used to limit the horizontal error axes
+    """
+    fig, ax = plt.subplots(
+        1,
+        2,
+        figsize=(10, 5),
+        gridspec_kw={"width_ratios": [3, 3]},
+        layout="constrained",
+    )
+    ax[0].ecdf(
+        np.sqrt(results_df["pos_e"] ** 2 + results_df["pos_n"] ** 2), label=label
+    )
+    ax[0].legend()
+    ax[0].grid()
+    ax[0].set_xlabel(
+        "Horizontal position error [m]",
+    )
+    ax[0].set_ylabel("Cumulative distribution")
+    ax[1].ecdf(results_df["pos_u"], label=label)
+    ax[1].legend()
+    ax[1].grid()
+    ax[1].set_xlabel("Up position error [m]")
+    ax[1].set_ylabel("Cumulative distribution")
+    plt.savefig(filepath_save)
+
+
+def plot_residuals_code(filepath_save, df):
+    fig, ax = plt.subplots(layout="constrained")
+
+    for prn, group in df.groupby("prn"):
+        ax.plot(
+            group["time_of_reception_in_receiver_time"],
+            group["residual_code"],
+            marker=".",
+            markersize=2,
+            ls="",
+            label=group.at[group.index[0], "constellation"]
+            + group.at[group.index[0], "prn"].astype(str).zfill(2),
+        )
+
+    lgnd = ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=8)
+    [lgnd.legend_handles[i].set_markersize(10) for i in range(len(lgnd.legend_handles))]
+    ax.grid()
+    ax.set_xlabel("epoch")
+    ax.set_ylabel("code residuals [m]")
+    ax.tick_params(axis="x", labelrotation=45)
+    ax.xaxis.set_major_formatter(dateFmt)
+    plt.savefig(filepath_save)
+
+
+def analyze_results_feather(file):
+    results = pd.read_feather(file)
+    analyze_result(results)
+
+
+def analyze_results(results):
+    results["pos_h"] = results[["pos_e", "pos_n"]].apply(np.linalg.norm, axis=1)
+    results["pos_3d"] = results[["pos_e", "pos_n", "pos_u"]].apply(
+        np.linalg.norm, axis=1
+    )
+    results_desc = results[["pos_e", "pos_n", "pos_u", "pos_h", "pos_3d"]].describe(
+        percentiles=[0.25, 0.5, 0.75, 0.95]
+    )
+    print(results_desc)
+    print("------------------------")
+    print(
+        f"Score = 0.5 * ({results_desc.loc['50%', 'pos_3d']:.3f} + {results_desc.loc['95%', 'pos_3d']:.3f})"
+    )
+    print(
+        f"      = {results_desc.loc['50%', 'pos_3d'] + results_desc.loc['95%', 'pos_3d']:.3f}"
+    )
+    return

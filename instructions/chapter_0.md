@@ -74,7 +74,8 @@ uv run pytest tests/test_chapter0.py::test_iono
 ```
 
 # extract_columns
-Summary: TODO
+Summary:
+- return a `pd.DataFrame` with a subset of columns.
 
 Args:
 - `df_corr: pd.DataFrame`, a `pd.DataFrame` loaded from a `prx` file and with an additional column named `"C_obs_corr_m"`
@@ -86,7 +87,7 @@ Returns:
   - 'sat_pos_x_m',
   - 'sat_pos_y_m',
   - 'sat_pos_z_m',
-  - 'C_obs_corr_m',
+  - 'C_obs_m',
   - 'constellation',
   - 'prn'
 
@@ -96,7 +97,9 @@ uv run pytest tests/test_chapter0.py::test_extract_col
 ```
 
 # plot_nsat_vs_elevation_mask
-Summary: count observations for different elevation mask values and save this in a figure `figures\nbsat_vs_elevation_mask.png`.
+Summary:
+- Count the number of observations at each epoch for different elevation mask values
+- save this in a figure `figures\nbsat_vs_elevation_mask.png`.
 
 Args:
 - `df_prx: pd.DataFrame`, a `pd.DataFrame` loaded from a `prx` file.
@@ -105,4 +108,8 @@ Args:
 Returns:
 - None
 
+> Hints:
+> - Don't forget to `import matplotlib.pyplot as plt` at the beginning of the module.
+
 You should test it yourself by plotting the number of GPS satellite broadcasting the C1C signal in the file `data/TLSE00FRA_R_20240010000_01D_30S_MO.csv` for an elevation mask [0,10,20,30,40,50]
+
