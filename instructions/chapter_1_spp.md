@@ -16,7 +16,7 @@ Additionally, we will observe:
 - improve the accuracy of the solution by using the satellites' elevation
 
 
-## 1. 🧑‍💻Coding the SPP algorithm
+## 1.🧑‍💻Coding the SPP algorithm
 ### 1.1. Code observation model
 In the `src/gnss.py` module, write a function `obs_code_model`.
 
@@ -170,7 +170,7 @@ The estimation algorithm has to be applied at each epoch, resulting in a 4-eleme
 
 Let us now analyze the obtained solution and try to improve it.
 
-## 2. 🔎Analyzing the SPP solution
+## 2.🔎Analyzing the SPP solution
 ### 2.1. Analyse the positioning results in the ENU frame
 Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.
 

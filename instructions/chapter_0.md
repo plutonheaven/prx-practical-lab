@@ -8,7 +8,7 @@ Now that you know how to code using `pandas`, write a python module named `prx_t
 - `extract_columns`
 - `plot_nsat_vs_elevation_mask`
 
-## load_prx_file
+## 1. load_prx_file
 Summary:
 - Loads GNSS observations from a `prx` file in a `pd.DataFrame`.
 - Filters the data to keep only specific signals per constellation.
@@ -55,7 +55,7 @@ To verify your implementation, test your function using the following line in a 
 uv run pytest tests/test_chapter0.py::test_load_prx_file
 ```
 
-# apply_iono_corr
+# 2. apply_iono_corr
 Summary:
 - Compute a iono-corrected code pseudo-range observation, according to the following formula: $C_{corr}=C - I$, where $C$ is the code observation and $I$ is the ionosperic delay
 
@@ -73,7 +73,7 @@ To verify your implementation, test your function using the following line in a 
 uv run pytest tests/test_chapter0.py::test_iono
 ```
 
-# extract_columns
+# 3. extract_columns
 Summary:
 - return a `pd.DataFrame` with a subset of columns.
 
@@ -96,7 +96,7 @@ To verify your implementation, test your function using the following line in a 
 uv run pytest tests/test_chapter0.py::test_extract_col
 ```
 
-# plot_nsat_vs_elevation_mask
+# 4. plot_nsat_vs_elevation_mask
 Summary:
 - Count the number of observations at each epoch for different elevation mask values
 - save this in a figure `figures\nbsat_vs_elevation_mask.png`.

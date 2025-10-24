@@ -196,7 +196,7 @@ def plot_residuals_code(filepath_save, df):
 
 def analyze_results_feather(file):
     results = pd.read_feather(file)
-    analyze_result(results)
+    analyze_results(results)
 
 
 def analyze_results(results):
