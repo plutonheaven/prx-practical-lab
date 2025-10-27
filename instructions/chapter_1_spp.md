@@ -51,7 +51,7 @@ Example of function call:
 ```python
 import src.prx as prx
 import src.gnss as gnss
-from src.constant import TLSE_2024001_ECEF
+from src.constants import TLSE_2024001_ECEF
 
 df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
 code_predicted = gnss.code_obs_model(df_prx, TLSE_2024001_ECEF)
@@ -80,9 +80,9 @@ Returns:
 
 Example of function call:
 ```python
-import src.prx-tools as prx
+import src.prx_tools as prx
 import src.gnss as gnss
-from src.constant import TLSE_2024001_ECEF
+from src.constants import TLSE_2024001_ECEF
 
 df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
 jac = gnss.jacobian_code(df_prx, TLSE_2024001_ECEF)
@@ -109,7 +109,7 @@ Returns:
 
 Example of function call:
 ```python
-import src.prx-tools as prx
+import src.prx_tools as prx
 import src.gnss as gnss
 
 df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
@@ -141,7 +141,7 @@ Returns:
 
 Example of function call:
 ```python
-import src.prx-tools as prx
+import src.prx_tools as prx
 import src.gnss as gnss
 
 df = ...

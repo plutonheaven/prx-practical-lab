@@ -28,7 +28,7 @@ Returns:
 
 Examples of calls:
 ```python
-import src.prx-tools as prx
+import src.prx_tools as prx
 
 # single constellation, single frequency
 data_scsf = prx.load_prx_file(
