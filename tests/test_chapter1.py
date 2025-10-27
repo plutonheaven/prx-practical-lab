@@ -136,8 +136,8 @@ def test_wls():
     assert x_hat == pytest.approx(np.array([[np.mean(obs[0:3])], [np.mean(obs[3:6])]]))
 
 
-def test_compute_code_residuals():
-    from src.gnss import compute_residuals_code
+def test_code_residuals():
+    from src.gnss import residuals_uncorrected_code
 
     # test with without noise and corrections
     df = pd.DataFrame(
@@ -159,7 +159,7 @@ def test_compute_code_residuals():
         np.array([0] * 5).reshape(1, 5),
         columns=["epoch", "pos_x", "pos_y", "pos_z", "clk_b"],
     )
-    compute_residuals_code(df, results)
+    residuals_uncorrected_code(df, results)
     assert "residual_code" in df.columns
     assert df.residual_code.to_numpy() == pytest.approx(np.zeros(3))
 
@@ -183,7 +183,7 @@ def test_compute_code_residuals():
         np.array([0] * 5).reshape(1, 5),
         columns=["epoch", "pos_x", "pos_y", "pos_z", "clk_b"],
     )
-    compute_residuals_code(df, results)
+    residuals_uncorrected_code(df, results)
     assert "residual_code" in df.columns
     assert df.residual_code.to_numpy() == pytest.approx(np.full((3,), -2))
 

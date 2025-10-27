@@ -18,7 +18,7 @@ Additionally, we will observe:
 
 ## 1.🧑‍💻Coding the SPP algorithm
 ### 1.1. Code observation model
-In the `src/gnss.py` module, write a function `obs_code_model`.
+In the `src/gnss.py` module, write a function `obs_model_code`.
 
 Summary:
 - Computes the predicted code observation from data `prx` file in a `pd.DataFrame`.
@@ -49,12 +49,12 @@ Returns:
 
 Example of function call:
 ```python
-import src.prx as prx
+import src.prx_tools as prx
 import src.gnss as gnss
 from src.constants import TLSE_2024001_ECEF
 
 df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
-code_predicted = gnss.code_obs_model(df_prx, TLSE_2024001_ECEF)
+code_predicted = gnss.obs_model_code(df_prx, TLSE_2024001_ECEF)
 ```
 
 To verify your implementation, test your function using the following line in a terminal:
@@ -158,6 +158,10 @@ uv run pytest tests/test_chapter1.py::test_wls
 ```
 
 ### 1.5. Apply the SPP positioning algorithm at each epoch
+Now, it is time to use all the functions added to the `src/gnss.py` in a script!
+
+Create a script at the repository root named `main_spp.py` and write the code to compute the SPP solution.
+
 When the `prx` file is loaded, the resulting dataframe contains observations for several epochs.  
 The estimation algorithm has to be applied at each epoch, resulting in a 4-element estimated state vector at each epoch.
 
@@ -186,10 +190,13 @@ helpers.analyze_results(results)  # display error stats and score
 ```
 
 ### 2.2. Analyze the estimation residuals
-In the `src/gnss.py` module, write a function `compute_residuals_code`.
+In the `src/gnss.py` module, write a function `residuals_uncorrected_code`.
 
 Summary:
-- The estimation residuals are obtained by computing $\mathbf{y}-\mathbf{h}(\mathbf{\hat{x}})$, where $\mathbf{\hat{x}}$ is the estimation result.
+- The estimation residuals are obtained by computing $\mathbf{y}-\mathbf{h}(\mathbf{\hat{x}})$, where:
+  - $\mathbf{y}$ is the observation vector,
+  - $\mathbf{h}(\mathbf{x})$ is the observation model applied at state vector $\mathbf{x}$,
+  - $\mathbf{\hat{x}}$ is the estimation result.
 - This function adds a column `residual_code` with the residual values to the `prx` dataframe
 
 Args:
@@ -205,7 +212,7 @@ Returns:
 
 To verify your implementation, test your function using the following line in a terminal:
 ```bash
-uv run pytest tests/test_chapter1.py::test_compute_code_residuals
+uv run pytest tests/test_chapter1.py::test_code_residuals
 ```
 
 Plot the residual time series for each satellite on the same plot using `helpers.plot_residuals_code`.
@@ -213,6 +220,7 @@ Plot the residual time series for each satellite on the same plot using `helpers
 Take a moment to think about the result.
 - What would be the expected shape or distribution of the residuals?
 - What may be the reason for large residual values?
+<mark> How to collect those analyses??
 
 ## 3. 📈Improving the SPP solution
 One of the main sources of erros in the observations are the atmospheric errors, which are larger when the satellite elevation is low.
@@ -242,7 +250,7 @@ Test your modification with the following command:
 uv run pytest tests/test_chapter1.py::test_cov_mat_elevation
 ```
 
-## 4.🏅Compete in the 2025 positioning challenge
+## 4.🏅Compete in the 2025 positioning leaderboard
 Save your best solution in the folder `results/SPP.feather` using the function  `pd.DataFrame.to_feather` and add this file to your online repository. It will be evaluated and ranked against the other student teams' solutions.
 
 You can use the following line to save your results dataframe in `feather` format:
