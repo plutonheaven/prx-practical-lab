@@ -16,55 +16,6 @@ Additionally, along the project, we will:
 - observe the characteristics of the differentially-corrected code observations
 - compare the DGNSS and the SPP solution
 
----
-<mark>template to remove
-
-In the `src/gnss.py` module, write a function `obs_code_model`.
-
-Summary:
-- Computes the predicted code observation from data `prx` file in a `pd.DataFrame`.
-- The code observation model is:$$C^{sat}=\lVert \mathbf{r}_{rx} - \mathbf{r}^{sat}\rVert + {dt}_{rx} + s_{rx}^{sat} - ({dt}^{sat}+{dt}^{sat}_{rel}-t_{gd}^{sat})+i_{rx}^{sat}+t_{rx}^{sat}$$
-    - $\mathbf{r}_{rx}$ is the receiver Earth Centered Earth Fixed (ECEF) position
-    - $\mathbf{r}^{sat}$ is the satellite ECEF position
-    - $s_{rx}^{sat}$ is the Sagnac effect (due to Earth rotation during signal propagation)
-    - ${dt}_{rx}$ is the receiver clock bias
-    - ${dt}^{sat}$ is the satellite clock bias
-    - ${dt}^{sat}_{rel}$ is the relativistic clock effect (due to the difference of the gravitational potential and to the relative speed)
-    - $t_{gd}^{sat}$ is the satellite hardware bias
-    - $i_{rx}^{sat}$ is the ionospheric delay
-    - $t_{rx}^{sat}$ is the tropospheric delay
-    - All values are expressed in meters
-
-Args:
-- `df: pd.DataFrame`, a dataframe loaded from a `prx` (csv-formatted) file.
-- `rx_pos: np.array`, the receiver position in meters, expressed in the Earth-Centered, Earth-Fixed (ECEF) frame.
-- `rx_clk: float=0`, the receiver clock bias in meters. A default value of 0 should be used.
-
-Returns:
-- an `np.array` containing the predicted code observation values
-
-> 💡Hints:
-> - To compute the geometric distance, you can use the `np.linalg.norm` function.
-> - The relevant information is contained in the columns `"sat_pos_x_m", "sat_pos_y_m", "sat_pos_z_m", "sat_clock_offset_m", "sagnac_effect_m", "relativistic_clock_effect_m", "sat_code_bias_m", "iono_delay_m", "tropo_delay_m"` of the DataFrame.
-
-
-Example of function call:
-```python
-import src.prx as prx
-import src.gnss as gnss
-from src.constants import TLSE_2024001_ECEF
-
-df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
-code_predicted = gnss.code_obs_model(df_prx, TLSE_2024001_ECEF)
-```
-
-To verify your implementation, test your function using the following line in a terminal:
-```bash
-uv run pytest tests/test_chapter1.py::test_uncorrected_code_model
-```
----
-
-
 ## 1.🧑Coding the DGNSS solution
 ### 1.1. Apply differential corrections
 In the `src/gnss.py` module, write a function `apply_differential_corrections`.
@@ -85,7 +36,7 @@ Returns:
 
 > 💡Hints:
 > - You can define an `MultiIndex` for a dataframe based on several columns using the function `pd.DataFrame.set_index`.
-> - Once an index is defined, you can perform operations (such as `df1 + df2`) over the whole dataframe.
+> - Once an index is defined, you can perform operations (such as `df1 + df2` or `df1.col - df2.col`) on the whole dataframe.
 > - If a value is absent on one of the 2 dataframes, the result is replaced by a `NaN`. You should remove rows containing `NaN` with the function `pd.DataFrame.dropna()`.
 > - After performing the operation, you can move back the `MultiIndex` to columns with the function `pd.DataFrame.reset_index()`
 
@@ -128,7 +79,7 @@ uv run pytest tests/test_chapter2.py::test_corrected_code_model
 ```
 
 ### 1.3. Jacobian matrix of the corrected code observation model
-If you look at the corrected code observation model, you will realize that it has the same Jacobian matrix as the uncorrected ones.
+If you look at the corrected code observation model, you will realize that it has the same Jacobian matrix as the uncorrected code observation model.
 
 Therefore, we can re-use your function `src.gnss::jacobian_code`!
 
@@ -136,7 +87,7 @@ Therefore, we can re-use your function `src.gnss::jacobian_code`!
 We will use the same models as the one already coded in you function `src.gnss::obs_covariance_mat`.
 
 ### 1.5. Weighted Least Squares
-The same estimation algorithm as for the SPP solution can be used. Just make sure that you correctly define the observation vector, observation model, jacobian and observation covariance matrices.
+The same estimation algorithm as for the SPP solution can be used. Just make sure that you correctly define the observation vector, observation model, jacobian matrix and observation covariance matrix.
 
 ### 1.6. Compute the DGNSS solution at each epoch
 Create a script at the repository root named `main_dgnss.py` and write the code to compute the DGNSS solution.
@@ -146,22 +97,23 @@ You may re-use the same script structure as `main_spp.py`, except that you will 
 The DGNSS solution shall be recorded in a `results` dataframe containing the columns `"epoch","pos_x","pos_y","pos_z","clk_b"`.
 
 ## 2.🔎Analyze the DGNSS solution
-### 2.1. Analyse the positioning results in the ENU frame
+### 2.1. Analyze the positioning results in the ENU frame
 Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.
 Use the function `helpers.analyze_results` to display various statistics on a `results` dataframe, and to compute the accuracy score for this solution.
 
 Take the time to compare the SPP and the DGNSS solution:
-- Is one of the solution centered?
-- Is the variance of the DGNSS solution better or worst than SPP?
+- How do would you characterize the distribution of the positioning error, notably in terms of bias and dispersion?
 - Can you give some hints about the reasons for those differences?  
 <mark> How to collect those analyses??
 
 ## 2.2. Analyze the differentially-corrected code pseudorange residuals
 In the module `src/gnss.py`, create a function `residuals_corrected_code`.
 
-This function is very similar to your `residuals_uncorrected_code`, except that you will consider the column `C_obs_corr_m` for the observation vector, and the function `obs_model_corrected_code` for the observation model.
+This function is very similar to your `residuals_uncorrected_code`, except that you will have to consider:
+- the column `C_obs_corr_m` for the observation vector,
+- the function `obs_model_corrected_code` for the observation model.
 
-It shall return `df_prx` with an additional column `residual_code`
+It shall return `df_prx` with an additional column `residual_code`.
 
 To verify your implementation, test your function using the following line in a terminal:
 ```bash
@@ -174,9 +126,9 @@ Take the time to compare the observation residuals for the SPP and the DGNSS sol
 <mark> How to collect those analyses??
 
 ## 3.🏅Compete in the 2025 positioning leaderboard
-Save your best solution in the folder `results/DGNSS.feather` using the function  `pd.DataFrame.to_feather` and add this file to your online repository. It will be evaluated and ranked against the other student teams' solutions.
+Try to obtain the best accuracy for the DGNSS solution. You may take into account the satellite elevation in the positioning algorithm to see if it improves the solution accuracy.
 
-You can try to take into account the satellite elevation in the positioning algorithm to see if it improves the solution accuracy.
+Save your best solution in the folder `results/DGNSS.feather` using the function  `pd.DataFrame.to_feather` and add this file to your online repository. It will be evaluated and ranked against the other student teams' solutions.
 
 You can use the following line to save your results dataframe in `feather` format:
 ```python

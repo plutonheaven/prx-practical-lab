@@ -33,7 +33,14 @@ def test_differential_code_corrections():
     pos_base = np.array([0] * 3)
 
     df_result = apply_differential_corrections(df1, df2, pos_base)
-    assert "C_obs_corr_m" in df_result.columns
+    for col in [
+        "C_obs_corr_m",
+        "time_of_reception_in_receiver_time",
+        "constellation",
+        "prn",
+        "rnx_obs_identifier",
+    ]:
+        assert col in df_result.columns, f"{col} not in the resulting dataframe "
     assert df_result.C_obs_corr_m.to_numpy() == pytest.approx(np.array([0] * 4))
 
     # remove one row from df2
@@ -53,6 +60,7 @@ def test_corrected_code_model():
     They should not be taken into account in the corrected code observation model.
     """
     from src.gnss import obs_model_corrected_code
+
     # test geometric distance
     df = pd.DataFrame(
         {
@@ -69,15 +77,15 @@ def test_corrected_code_model():
     )
     rx_pos = [0, 0, 0]
     rx_clk = 0
-    assert (obs_model_corrected_code(df, rx_pos, rx_clk) == np.array([1.0] * 3)).all(), (
-        "geometric distance wrongly computed"
-    )
+    assert (
+        obs_model_corrected_code(df, rx_pos, rx_clk) == np.array([1.0] * 3)
+    ).all(), "geometric distance wrongly computed"
 
     # test rx clock bias
     rx_clk = 1
-    assert (obs_model_corrected_code(df, rx_pos, rx_clk) == np.array([2.0] * 3)).all(), (
-        "issue with rx_clk"
-    )
+    assert (
+        obs_model_corrected_code(df, rx_pos, rx_clk) == np.array([2.0] * 3)
+    ).all(), "issue with rx_clk"
     assert (obs_model_corrected_code(df, rx_pos) == np.array([1.0] * 3)).all(), (
         "rx_clk default value should be 0"
     )

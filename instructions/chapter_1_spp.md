@@ -175,7 +175,7 @@ The estimation algorithm has to be applied at each epoch, resulting in a 4-eleme
 Let us now analyze the obtained solution and try to improve it.
 
 ## 2.🔎Analyzing the SPP solution
-### 2.1. Analyse the positioning results in the ENU frame
+### 2.1. Analyze the positioning results in the ENU frame
 Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.
 
 Additionally, the function `helpers.analyze_results` display various statistics on a `results` dataframe, an computes an **accuracy score** based on the average between the 50-th percentile and the 95-th percentile of the 3D position error.
