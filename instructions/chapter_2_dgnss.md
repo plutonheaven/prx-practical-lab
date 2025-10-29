@@ -71,7 +71,7 @@ Args:
 - `rx_clk: float=0`, the receiver clock bias in meters. A default value of 0 should be used.
 
 Returns:
-- - an `np.array` containing the predicted corrected code observation values.
+- an `np.array` containing the predicted corrected code observation values.
 
 To verify your implementation, test your function using the following line in a terminal:
 ```bash
@@ -106,7 +106,7 @@ Take the time to compare the SPP and the DGNSS solution:
 - Can you give some hints about the reasons for those differences?  
 <mark> How to collect those analyses??
 
-## 2.2. Analyze the differentially-corrected code pseudorange residuals
+### 2.2. Analyze the differentially-corrected code pseudorange residuals
 In the module `src/gnss.py`, create a function `residuals_corrected_code`.
 
 This function is very similar to your `residuals_uncorrected_code`, except that you will have to consider:

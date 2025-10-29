@@ -207,12 +207,36 @@ def analyze_results(results):
     results_desc = results[["pos_e", "pos_n", "pos_u", "pos_h", "pos_3d"]].describe(
         percentiles=[0.25, 0.5, 0.75, 0.95]
     )
+    score = results_desc.loc["50%", "pos_3d"] + results_desc.loc["95%", "pos_3d"]
     print(results_desc)
     print("------------------------")
     print(
         f"Score = 0.5 * ({results_desc.loc['50%', 'pos_3d']:.3f} + {results_desc.loc['95%', 'pos_3d']:.3f})"
     )
-    print(
-        f"      = {results_desc.loc['50%', 'pos_3d'] + results_desc.loc['95%', 'pos_3d']:.3f}"
+    print(f"      = {score:.3f}")
+    return score
+
+
+def find_clean_intervals(df, n_intervals: int = 5):
+    # compute nb of cycle slips per epochs
+    n_cycle_slips = df.groupby("time_of_reception_in_receiver_time")[["LLI"]].apply(
+        np.sum
     )
-    return
+    # compute cumulative number of cycle slips
+    n_cycle_slips["cumulative_lli"] = n_cycle_slips["LLI"].cumsum()
+    # compute start and end date of periods without LLI
+    continuous_periods = (
+        n_cycle_slips.reset_index()
+        .groupby("cumulative_lli")
+        .agg(
+            start=("time_of_reception_in_receiver_time", "first"),
+            end=("time_of_reception_in_receiver_time", "last"),
+        )
+    )
+    continuous_periods["length_s"] = (
+        continuous_periods["end"] - continuous_periods["start"]
+    ).dt.total_seconds()
+    # return 5 longest periods
+    return continuous_periods.sort_values(by="length_s", ascending=False).head(
+        n_intervals
+    )

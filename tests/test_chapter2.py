@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from src.constants import C_LIGHT_MPS
+
 
 def test_differential_code_corrections():
     from src.gnss import apply_differential_corrections
@@ -13,6 +15,10 @@ def test_differential_code_corrections():
             "prn": [1, 2, 1, 2],
             "rnx_obs_identifier": ["1C"] * 4,
             "C_obs_m": [3, 4, 5, 6],
+            "L_obs_cycles": [
+                cycles * 1575.42e6 / C_LIGHT_MPS for cycles in [3, 4, 5, 6]
+            ],
+            "carrier_frequency_hz": [1575.42e6] * 4,
             "sat_pos_x_m": [0] * 4,
             "sat_pos_y_m": [0] * 4,
             "sat_pos_z_m": [0] * 4,
@@ -25,6 +31,10 @@ def test_differential_code_corrections():
             "prn": [1, 2, 1, 2],
             "rnx_obs_identifier": ["1C"] * 4,
             "C_obs_m": [3, 4, 5, 6],
+            "L_obs_cycles": [
+                cycles * 1575.42e6 / C_LIGHT_MPS for cycles in [3, 4, 5, 6]
+            ],
+            "carrier_frequency_hz": [1575.42e6] * 4,
             "sat_pos_x_m": [0] * 4,
             "sat_pos_y_m": [0] * 4,
             "sat_pos_z_m": [0] * 4,

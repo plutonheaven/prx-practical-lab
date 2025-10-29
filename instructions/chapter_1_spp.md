@@ -178,7 +178,7 @@ Let us now analyze the obtained solution and try to improve it.
 ### 2.1. Analyze the positioning results in the ENU frame
 Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.
 
-Additionally, the function `helpers.analyze_results` display various statistics on a `results` dataframe, an computes an **accuracy score** based on the average between the 50-th percentile and the 95-th percentile of the 3D position error.
+Additionally, the function `helpers.analyze_results` display various statistics on a `results` dataframe, and returns an **accuracy score** based on the average between the 50-th percentile and the 95-th percentile of the 3D position error.
 
 Here is an example to visualize the score of your solution:
 ```python
@@ -223,7 +223,7 @@ Take a moment to think about the result.
 <mark> How to collect those analyses??
 
 ## 3. 📈Improving the SPP solution
-One of the main sources of erros in the observations are the atmospheric errors, which are larger when the satellite elevation is low.
+One of the main sources of errors in the observations are the atmospheric errors, which are larger when the satellite elevation is low.
 
 💡Let us try to mitigate the effect of low-elevation satellite with 2 solutions:
 - applying an elevation mask
@@ -234,9 +234,10 @@ In your `prx_tools.load_prx_file` function:
 - add an additional input argument  with a default value equal to 0: `mask_el_deg: float=0`.
 - filter out the low elevation satellites
 
-Test your modification with the following command:
+Test your modification (and make sure the initial test still passes) with the following command:
 ```bash
 uv run pytest tests/test_chapter1.py::test_load_with_elevation_mask
+uv run pytest tests/test_chapter0.py::test_load_prx_file
 ```
 
 Run the SPP positioning algorithm with different elevation mask and choose the best option based on the score provided by `helpers.analyze_results`.
@@ -245,9 +246,10 @@ Run the SPP positioning algorithm with different elevation mask and choose the b
 Add an alternative `model`, named `elevation`, to your function `gnss.obs_covariance_mat`.
 A simple proposition is to model the variance as $(\sigma_{code}/sin(el))^2$.
 
-Test your modification with the following command:
+Test your modification (and make sure the initial test still passes) with the following command:
 ```bash
 uv run pytest tests/test_chapter1.py::test_cov_mat_elevation
+uv run pytest tests/test_chapter1.py::test_cov_mat_identical
 ```
 
 ## 4.🏅Compete in the 2025 positioning leaderboard
