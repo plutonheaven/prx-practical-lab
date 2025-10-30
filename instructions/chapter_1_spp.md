@@ -1,26 +1,28 @@
-# Chapter 1: Single Point Positioning
+# 📚 Chapter 1: Single Point Positioning (SPP)
 
+**Objective**  
 In this project, we will compute the **Single Point Positioning** solution, which consists in:
 - using code observations
 - using the broadcast navigation message for correction computation (satellite position and clock, atmospheric effect, ...)
 - using a (Weighted) Least Squares algorithm to compute the solution at each epoch
 - estimating the receiver position and clock
 
-To do so, the following steps are proposed:
-- compute the predicted code observations using the broadcast corrections
-- compute the Jacobian matrix of the observation model
-- compute the SPP solution at each epoch (snapshot solution)
+**Steps Overview**
+1. Implement core functions for SPP.
+2. Run main_spp.py to compute position estimates.
+3. Analyze ENU errors and residuals.
+4. Improve accuracy using elevation-based strategies.
 
-Additionally, we will observe:
-- the characteristics of the estimation residuals, which should give a hint on how to improve a solution
-- improve the accuracy of the solution by using the satellites' elevation
+📦**Deliverables**
+- Complete python module `src/gnss.py`
+- Python script: `main_spp.py`
+- Updated powerpoint answer doc with plots and analysis
 
+## 1.🧑‍💻Coding Tasks
+All functions shall be coded in the `src/gnss.py` module.
 
-## 1.🧑‍💻Coding the SPP algorithm
-### 1.1. Code observation model
-In the `src/gnss.py` module, write a function `obs_model_code`.
-
-Summary:
+### 1.1. Function: `obs_model_code(df, rx_pos, rx_clk=0)`
+**Summary:**
 - Computes the predicted code observation from data `prx` file in a `pd.DataFrame`.
 - The code observation model is:$$C^{sat}=\lVert \mathbf{r}_{rx} - \mathbf{r}^{sat}\rVert + {dt}_{rx} + s_{rx}^{sat} - ({dt}^{sat}+{dt}^{sat}_{rel}-t_{gd}^{sat})+i_{rx}^{sat}+t_{rx}^{sat}$$
     - $\mathbf{r}_{rx}$ is the receiver Earth Centered Earth Fixed (ECEF) position
@@ -34,20 +36,21 @@ Summary:
     - $t_{rx}^{sat}$ is the tropospheric delay
     - All values are expressed in meters
 
-Args:
+**Args:**
 - `df: pd.DataFrame`, a dataframe loaded from a `prx` (csv-formatted) file.
 - `rx_pos: np.array`, the receiver position in meters, expressed in the Earth-Centered, Earth-Fixed (ECEF) frame.
 - `rx_clk: float=0`, the receiver clock bias in meters. A default value of 0 should be used.
 
-Returns:
+**Returns:**
 - an `np.array` containing the predicted code observation values
 
-> 💡Hints:
-> - To compute the geometric distance, you can use the `np.linalg.norm` function.
-> - The relevant information is contained in the columns `"sat_pos_x_m", "sat_pos_y_m", "sat_pos_z_m", "sat_clock_offset_m", "sagnac_effect_m", "relativistic_clock_effect_m", "sat_code_bias_m", "iono_delay_m", "tropo_delay_m"` of the DataFrame.
+**Tests:**  
+To verify your implementation, test your function using the following line in a terminal:
+```bash
+uv run pytest tests/test_chapter1.py::test_uncorrected_code_model
+```
 
-
-Example of function call:
+**Example Usage:**
 ```python
 import src.prx_tools as prx
 import src.gnss as gnss
@@ -57,28 +60,31 @@ df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
 code_predicted = gnss.obs_model_code(df_prx, TLSE_2024001_ECEF)
 ```
 
-To verify your implementation, test your function using the following line in a terminal:
-```bash
-uv run pytest tests/test_chapter1.py::test_uncorrected_code_model
-```
+> 💡Hints:
+> - To compute the geometric distance, use the `np.linalg.norm` function.
+> - The relevant information is contained in the columns `"sat_pos_x_m", "sat_pos_y_m", "sat_pos_z_m", "sat_clock_offset_m", "sagnac_effect_m", "relativistic_clock_effect_m", "sat_code_bias_m", "iono_delay_m", "tropo_delay_m"` of the dataframe.
 
-### 1.2. Jacobian matrix of the code observation model 
-In the `src/gnss.py` module, write a function `jacobian_code`.
-
-Summary:
+### 1.2. Function: `jacobian_code(df: pd.DataFrame, rx_pos: np.array)` 
+**Summary:**
 - Computes the jacobian matrix of the code observation model at a receiver position `rx_pos`.
 - The elements of the jacobian matrix are equal to the partial derivative of the observation model with regards to each state.
     - for a position state `x/y/z`, $\frac{\partial C}{\partial x}=\frac{x_{rx} - x^{sat}}{\lVert \mathbf{r}_{rx} - \mathbf{r}^{sat} \rVert}$
     - for the clock bias state `b`, $\frac{\partial C}{\partial b}=1$
 
-Args:
+**Args:**
 - `df: pd.DataFrame`, a dataframe loaded from a `prx` file.
 - `rx_pos: np.array`, the receiver position in meters, expressed in the ECEF frame.
 
-Returns:
+**Returns:**
 - an `np.array` of shape `(m,4)` representing the Jacobian matrix, `m` being the number of observations.
 
-Example of function call:
+**Test:**
+To verify your implementation, test your function using the following line in a terminal:
+```bash
+uv run pytest tests/test_chapter1.py::test_jacobian_code
+```
+
+**Example Usage:**
 ```python
 import src.prx_tools as prx
 import src.gnss as gnss
@@ -88,26 +94,25 @@ df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
 jac = gnss.jacobian_code(df_prx, TLSE_2024001_ECEF)
 ```
 
-To verify your implementation, test your function using the following line in a terminal:
-```bash
-uv run pytest tests/test_chapter1.py::test_jacobian_code
-```
-
-### 1.3. Covariance matrix of the observations
-In the `src/gnss.py` module, write a function `obs_covariance_mat`.
-
-Summary:
+### 1.3. Function: `obs_covariance_mat(df: pd.DataFrame, model: str="identical)`
+**Summary:**
 - Computes the observation covariance matrix.
 - At first, a single model has to be coded with a variance which is identical for each observation. This will result in a covariance matrix equal to the identity matrix multiplied by the observation variance.
 
-Args:
+**Args:**
 - `df: pd.DataFrame`, a DataFrame loaded from a `prx` file.
 - `model: str="identical"`, a string describing the model. Default value should be `"identical"`, to model observations that are independent and identically-distributed.
 
-Returns:
+**Returns:**
 - an `np.array` of shape `(m,m)` containing the observation covariance matrix, `m` being the number of observations.
 
-Example of function call:
+**Test:**
+To verify your implementation, test your function using the following line in a terminal:
+```bash
+uv run pytest tests/test_chapter1.py::test_cov_mat_identical
+```
+
+**Example Usage:**
 ```python
 import src.prx_tools as prx
 import src.gnss as gnss
@@ -115,31 +120,27 @@ import src.gnss as gnss
 df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
 cov = gnss.obs_covariance_mat(df_prx, "identical")
 ```
-
-To verify your implementation, test your function using the following line in a terminal:
-```bash
-uv run pytest tests/test_chapter1.py::test_cov_mat_identical
-```
-
-
-### 1.4. Weighted Least Squares
-In the `src/gnss.py` module, write a function `wls`.
-
-Summary:
+### 1.4. Function: `wls(obs: np.array, obs_pred: np.array, jac: np.array, cov: np.array)`
+**Summary:**
 - Computes the linear weighted least square estimate.
 - We assume that the observation model is linearized around a good approximation of the true state, so that only a single iteration is necessary.
 - Let us assume that we linearized the observation model around the state vector $\mathbf{x}_0$. Then, the WLS estimate of $\mathbf{x}$ is $\hat{\mathbf{x}}=\mathbf{x_0} + \delta \hat{\mathbf{x}}$, where the state update is $\delta \hat{\mathbf{x}} =(\mathbf{H}^T\mathbf{R}^{-1}\mathbf{H})^{-1}\mathbf{H}^T\mathbf{R}^{-1}(\mathbf{y}-\mathbf{h}(\mathbf{\mathbf{x}_0}))$
 
-Args:
+**Args:**
 - `obs: np.array`, the observations
 - `obs_pred: np.array`, the predicted observations
 - `jac: np.array`, the observation model jacobian matrix
 - `cov: np.array`, the observation covariance matrix
 
-Returns:
+**Returns:**
 - a `np.array` of shape`(n,)` containing the **state update** to be applied to the linearization point, `n` being number of states.
 
-Example of function call:
+**Test:**
+```bash
+uv run pytest tests/test_chapter1.py::test_wls
+```
+
+**Example Usage:**
 ```python
 import src.prx_tools as prx
 import src.gnss as gnss
@@ -152,15 +153,11 @@ cov = gnss.obs_covariance_mat(df, "identical")
 dx_est = gnss.wls(obs, obs_pred, jac, cov)
 ```
 
-To verify your implementation, test your function using the following line in a terminal:
-```bash
-uv run pytest tests/test_chapter1.py::test_wls
-```
-
-### 1.5. Apply the SPP positioning algorithm at each epoch
+### 1.5. Script: `main_spp.py`
 Now, it is time to use all the functions added to the `src/gnss.py` in a script!
 
-Create a script at the repository root named `main_spp.py` and write the code to compute the SPP solution.
+Create a script at the repository root named `main_spp.py` and write the code to compute the SPP solution on the `prx` file ` data/TLSE00FRA_R_20240010000_01D_30S_MO.csv`.  
+Store the estimated position and clock bias for each epoch in a `pd.DataFrame` named `results` and having the columns `"epoch","pos_x","pos_y","pos_z","clk_b"`
 
 When the `prx` file is loaded, the resulting dataframe contains observations for several epochs.  
 The estimation algorithm has to be applied at each epoch, resulting in a 4-element estimated state vector at each epoch.
@@ -168,13 +165,16 @@ The estimation algorithm has to be applied at each epoch, resulting in a 4-eleme
 > 💡Hints:
 > - Use a `for` loop on the iterator created by `pd.DataFrame.groupby("time_of_reception_in_receiver_time")` to loop over the different epochs.
 > - For each epoch, compute the estimated state vector.
-> - Collect the position estimation result in a `pd.DataFrame` named `results` and having the columns `"epoch","pos_x","pos_y","pos_z","clk_b"`
+> - Store the estimated position and clock bias for each epoch in a `pd.DataFrame` named `results` and having the columns `"epoch","pos_x","pos_y","pos_z","clk_b"`
 
-🎉Congratulations, you have successfully coded a SPP solution👍 
+## 2.🔎Analysis Tasks
+Complete the powerpoint document by pasting figures and writing analyses.
 
-Let us now analyze the obtained solution and try to improve it.
+❓ **Questions to Answer**
+1. What is the ENU error distribution for SPP?
+2. (optional) What patterns do you observe in residuals?
+3. (optional) Which factors contribute to large residuals?
 
-## 2.🔎Analyzing the SPP solution
 ### 2.1. Analyze the positioning results in the ENU frame
 Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.
 
@@ -189,40 +189,37 @@ results = helpers.compute_enu_pos_error(  # adds the ENU position error as new c
 helpers.analyze_results(results)  # display error stats and score
 ```
 
-### 2.2. Analyze the estimation residuals
-In the `src/gnss.py` module, write a function `residuals_uncorrected_code`.
+### 2.2. Estimation residual analysis (optional)
+For the estimation residual analysis, an additional function has to be coded in `src/main.py`.
 
-Summary:
+**Function:** `residuals_uncorrected_code(df_prx: pd.DataFrame, results: pd.DataFrame)`
+
+**Summary:**
 - The estimation residuals are obtained by computing $\mathbf{y}-\mathbf{h}(\mathbf{\hat{x}})$, where:
   - $\mathbf{y}$ is the observation vector,
   - $\mathbf{h}(\mathbf{x})$ is the observation model applied at state vector $\mathbf{x}$,
   - $\mathbf{\hat{x}}$ is the estimation result.
 - This function adds a column `residual_code` with the residual values to the `prx` dataframe
 
-Args:
+**Args:**
 - `df_prx: pd.DataFrame`, the dataframe loaded from a `prx` file.
 - `results: pd.DataFrame`, the `results` dataframe containing the estimated solution in the columns `"epoch","pos_x","pos_y","pos_z","clk_b"`
 
-Returns:
+**Returns:**
 - `df_prx` with an additional column `residual_code`
 
-> 💡Hints:
-> - Use `DataFrame.merge` ([doc](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.merge.html)) to add a column with the estimated states corresponding to the same epochs. You have to specify the correct colum to use on the left and right dataframes, with the arguments `left_on` and `right_on`.
-> - After merging the estimated solution and `df_prx`, you can re-use your function `gnss.obs_model_code` on `df_prx.groupby("time_of_reception_in_receiver_time")`
-
+**Test:**  
 To verify your implementation, test your function using the following line in a terminal:
 ```bash
 uv run pytest tests/test_chapter1.py::test_code_residuals
 ```
 
-Plot the residual time series for each satellite on the same plot using `helpers.plot_residuals_code`.
+> 💡**Hints:**
+> - Use `DataFrame.merge` ([doc](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.merge.html)) to add a column with the estimated states corresponding to the same epochs. You have to specify the correct colum to use on the left and right dataframes, with the arguments `left_on` and `right_on`.
+> - After merging the estimated solution and `df_prx`, you can re-use your function `gnss.obs_model_code` on `df_prx.groupby("time_of_reception_in_receiver_time")`
+> - Once this function works, you can plot the residual time series for each satellite on the same plot using `helpers.plot_residuals_code`.
 
-Take a moment to think about the result.
-- What would be the expected shape or distribution of the residuals?
-- What may be the reason for large residual values?
-<mark> How to collect those analyses??
-
-## 3. 📈Improving the SPP solution
+## 3. 📈Improve the SPP solution (optional)
 One of the main sources of errors in the observations are the atmospheric errors, which are larger when the satellite elevation is low.
 
 💡Let us try to mitigate the effect of low-elevation satellite with 2 solutions:
@@ -253,9 +250,4 @@ uv run pytest tests/test_chapter1.py::test_cov_mat_identical
 ```
 
 ## 4.🏅Compete in the 2025 positioning leaderboard
-Save your best solution in the folder `results/SPP.feather` using the function  `pd.DataFrame.to_feather` and add this file to your online repository. It will be evaluated and ranked against the other student teams' solutions.
-
-You can use the following line to save your results dataframe in `feather` format:
-```python
-results.to_feather("results/SPP.feather")
-```
+Document your best solution in your report. It will be evaluated and ranked against the other student teams' solutions.
