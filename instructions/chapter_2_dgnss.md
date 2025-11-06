@@ -102,10 +102,9 @@ The DGNSS solution shall be recorded in a `results` dataframe containing the col
 Complete the powerpoint document by pasting figures and writing analyses.
 
 ❓ **Questions to Answer**
-1. What is the ENU error distribution for SPP?
-2. (optional) What patterns do you observe in residuals?
-3. (optional) Which factors contribute to large residuals?
-4. 
+1. Compare the DGNSS and the SPP solutions? How would you characterize the improvmement?
+2. (optional) What patterns do you observe in residuals? What has changed compared to the SPP residuals?
+
 ### 2.1. Analyze the positioning results in the ENU frame
 Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.
 Use the function `helpers.analyze_results` to display various statistics on a `results` dataframe, and to compute the accuracy score for this solution.

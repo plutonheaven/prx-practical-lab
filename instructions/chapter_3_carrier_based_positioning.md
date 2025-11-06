@@ -191,19 +191,13 @@ The pseudo-code for such function is:
 Modify your script `main_rtk.py` to process the 5 longest clean intervals, in order to have a significant number of estimation epochs (at least 1,000 epochs).
 
 ## 2.🔍Analysis Tasks
-Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.
+Complete the powerpoint document by pasting figures and writing analyses.
+
+❓ **Questions to Answer**
+1. Compare the RTK solutions to the other. How would you characterize the improvmement?
+
+Use the functions `compute_enu_pos_error`, `plot_enu_error` and `plot_enu_error_cdf` from the module `src/helpers.py` to compute, plot and characterize the position error in the East/North/Up frame.  
 Use the function `helpers.analyze_results` to display various statistics on a `results` dataframe, and to compute the accuracy score for this solution.
 
-### 2.1 Impact of an undetected cycle slip
-
-<mark> TODO
-
 ## 3.🏅Compete in the 2025 positioning leaderboard
-Try to obtain the best accuracy for the RTK solution. You may take into account the satellite elevation in the positioning algorithm to see if it improves the solution accuracy.
-
-Save your best solution in the folder `results/RTK.feather` using the function  `pd.DataFrame.to_feather` and add this file to your online repository. It will be evaluated and ranked against the other student teams' solutions.
-
-You can use the following line to save your results dataframe in `feather` format:
-```python
-results.to_feather("results/RTK.feather")
-```
+Document your best solution in your report. It will be evaluated and ranked against the other student teams' solutions.

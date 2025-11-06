@@ -1,9 +1,8 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-
-dateFmt = mdates.DateFormatter("%H:%M")  # date format
+import plotly.express as px
+import plotly.offline as pyo
+from plotly.subplots import make_subplots
 
 EARTH_FLATTENINGFACTOR = 1 / 298.257223563
 EARTH_SEMIMAJORAXIS_M = 6378137.0
@@ -97,101 +96,119 @@ def compute_enu_pos_error(results_df, ref_pos):
 
 
 def plot_enu_error(
-    filepath_save: str, results_df: pd.DataFrame, label: str, hor_axis_lim: float = 3.0
+    filepath_save: str,
+    results_df: pd.DataFrame,
+    title: str,
 ):
     """
-    Save a figure of the ENU error. One subplot for horizontal error point cloud. Another subplot for vertical error time series
+    Plot ENU error using Plotly Express.
+    One subplot for horizontal error scatter plot, another for vertical error time series.
 
     Inputs:
-    - filepath_save: str, location for saving the figure. Ex: "figures/enu.png"
-    - results_df: pd.DataFrame, dataframe containing the columns "epochs", "pos_e", "pos_n", "pos_u"
-    - ref_pos: list, true position of the receiver in ECEF frame
-    - label: str, plot label
-    - hor_axis_lim: float, used to limit the horizontal error axes
+    - filepath_save: str, path to save the HTML file
+    - results_df: pd.DataFrame with columns "epoch", "pos_e", "pos_n", "pos_u"
+    - title: str, plot title
     """
-    fig, ax = plt.subplots(
-        1,
-        2,
-        figsize=(10, 5),
-        gridspec_kw={"width_ratios": [3, 3]},
-        layout="constrained",
+    # Create horizontal error scatter plot
+    fig_hor = px.scatter(
+        results_df,
+        x="pos_e",
+        y="pos_n",
+        title="Horizontal Position Error",
+        labels={"pos_e": "East error [m]", "pos_n": "North error [m]"},
     )
-    ax[0].scatter(x=results_df["pos_e"], y=results_df["pos_n"], marker=".", label=label)
-    ax[0].legend()
-    ax[0].grid()
-    ax[0].set_xlim(-hor_axis_lim, hor_axis_lim)
-    ax[0].set_ylim(-hor_axis_lim, hor_axis_lim)
-    ax[0].set_xlabel(
-        "East position error [m]",
+    fig_hor.update_traces(marker=dict(size=4), name=title)
+
+    # Create vertical error time series plot
+    fig_vert = px.scatter(
+        results_df,
+        x="epoch",
+        y="pos_u",
+        title="Vertical Position Error",
+        labels={"epoch": "Epoch", "pos_u": "Up error [m]"},
     )
-    ax[0].set_ylabel("North position error [m]")
-    ax[1].scatter(x=results_df["epoch"], y=results_df["pos_u"], marker=".", label=label)
-    ax[1].legend()
-    ax[1].grid()
-    ax[1].set_xlabel("epoch")
-    ax[1].set_ylabel("Up position error [m]")
-    ax[1].tick_params(axis="x", labelrotation=45)
-    ax[1].xaxis.set_major_formatter(dateFmt)
-    plt.savefig(filepath_save)
+    fig_vert.update_traces(marker=dict(size=4))
+
+    # Combine subplots
+    fig = make_subplots(
+        rows=1, cols=2, subplot_titles=("Horizontal Error", "Vertical Error")
+    )
+    fig.add_trace(fig_hor.data[0], row=1, col=1)
+    fig.add_trace(fig_vert.data[0], row=1, col=2)
+
+    fig.update_xaxes(title_text="East error [m]", row=1, col=1)
+    fig.update_yaxes(title_text="North error [m]", row=1, col=1)
+    fig.update_xaxes(title_text="Epoch", row=1, col=2)
+    fig.update_yaxes(title_text="Up error [m]", row=1, col=2)
+
+    fig.update_layout(title_text=title, xaxis=dict(scaleanchor="y", scaleratio=1))
+    pyo.plot(fig, auto_open=False, filename=filepath_save + ".html")
 
 
-def plot_enu_error_cdf(filepath_save, results_df, label):
+def plot_enu_error_cdf(filepath_save: str, results_df: pd.DataFrame, title: str):
     """
     Save a figure of the ENU error cumulative density function. One subplot for the horizontal error, another for the vertical error.
 
     Inputs:
     - filepath_save: str, location for saving the figure. Ex: "figures/enu.png"
     - results_df: pd.DataFrame, dataframe containing the columns "epochs", "pos_e", "pos_n", "pos_u"
-    - ref_pos: list, true position of the receiver in ECEF frame
-    - label: str, plot label
-    - hor_axis_lim: float, used to limit the horizontal error axes
+    - title: str, plot title
     """
-    fig, ax = plt.subplots(
-        1,
-        2,
-        figsize=(10, 5),
-        gridspec_kw={"width_ratios": [3, 3]},
-        layout="constrained",
+    # Compute horizontal error
+    results_df["hor_error"] = np.sqrt(
+        results_df["pos_e"] ** 2 + results_df["pos_n"] ** 2
     )
-    ax[0].ecdf(
-        np.sqrt(results_df["pos_e"] ** 2 + results_df["pos_n"] ** 2), label=label
+
+    # Create ECDF plots
+    fig_hor = px.ecdf(
+        results_df,
+        x="hor_error",
+        title="Horizontal Position Error CDF",
+        labels={"hor_error": "Horizontal error [m]"},
     )
-    ax[0].legend()
-    ax[0].grid()
-    ax[0].set_xlabel(
-        "Horizontal position error [m]",
+    fig_vert = px.ecdf(
+        results_df,
+        x="pos_u",
+        title="Vertical Position Error CDF",
+        labels={"pos_u": "Up error [m]"},
     )
-    ax[0].set_ylabel("Cumulative distribution")
-    ax[1].ecdf(results_df["pos_u"], label=label)
-    ax[1].legend()
-    ax[1].grid()
-    ax[1].set_xlabel("Up position error [m]")
-    ax[1].set_ylabel("Cumulative distribution")
-    plt.savefig(filepath_save)
+
+    # Customize layout
+    fig_hor.update_layout(showlegend=True)
+    fig_vert.update_layout(showlegend=True)
+
+    # Combine subplots
+    fig = make_subplots(rows=1, cols=2)
+    fig.add_trace(fig_hor.data[0], row=1, col=1)
+    fig.add_trace(fig_vert.data[0], row=1, col=2)
+
+    fig.update_xaxes(title_text="Horizontal error [m]", row=1, col=1)
+    fig.update_yaxes(title_text="Cumulative distribution", row=1, col=1)
+    fig.update_xaxes(title_text="Up error [m]", row=1, col=2)
+    fig.update_yaxes(title_text="Cumulative distribution", row=1, col=2)
+
+    fig.update_layout(title_text=title)
+    pyo.plot(fig, auto_open=False, filename=filepath_save + ".html")
 
 
-def plot_residuals_code(filepath_save, df):
-    fig, ax = plt.subplots(layout="constrained")
-
-    for prn, group in df.groupby("prn"):
-        ax.plot(
-            group["time_of_reception_in_receiver_time"],
-            group["residual_code"],
-            marker=".",
-            markersize=2,
-            ls="",
-            label=group.at[group.index[0], "constellation"]
-            + group.at[group.index[0], "prn"].astype(str).zfill(2),
-        )
-
-    lgnd = ax.legend(loc="center left", bbox_to_anchor=(1, 0.5), fontsize=8)
-    [lgnd.legend_handles[i].set_markersize(10) for i in range(len(lgnd.legend_handles))]
-    ax.grid()
-    ax.set_xlabel("epoch")
-    ax.set_ylabel("code residuals [m]")
-    ax.tick_params(axis="x", labelrotation=45)
-    ax.xaxis.set_major_formatter(dateFmt)
-    plt.savefig(filepath_save)
+def plot_residuals_code(filepath_save: str, df: pd.DataFrame, title: str):
+    df["prn"] = df["prn"].astype(str).str.zfill(2)
+    fig = px.scatter(
+        df.sort_values(by="prn"),
+        x="time_of_reception_in_receiver_time",
+        y="residual_code",
+        color="prn",  # Each PRN gets a unique color
+        hover_data=["constellation", "prn"],  # Show constellation and PRN on hover
+        labels={
+            "time_of_reception_in_receiver_time": "Reception Time",
+            "residual_code": "Residual Code",
+            "prn": "PRN",
+        },
+        title="Residual Code per PRN",
+    )
+    fig.update_traces(marker=dict(size=6))
+    fig.update_layout(title_text=title, showlegend=True, legend_title="PRN")
+    pyo.plot(fig, auto_open=False, filename=filepath_save + ".html")
 
 
 def analyze_results_feather(file):

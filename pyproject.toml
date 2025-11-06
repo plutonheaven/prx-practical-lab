@@ -23,6 +23,7 @@ dependencies = [
   "pytest",
   "tqdm",
   "pyarrow",
+  "plotly",
 ]
 
 [tool.pytest.ini_options]
