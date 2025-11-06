@@ -1,11 +1,13 @@
 import pandas as pd
+
+from src.helpers import repo_root
 from src.prx_tools import load_prx_file, apply_iono_corr, extract_col
 
 
 def test_load_prx_file():
     # single constellation, single frequency
     df_prx = load_prx_file(
-        "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv", {"G": ["1C"]}, True
+        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip", {"G": ["1C"]}, True
     )
     assert df_prx.constellation.unique() == ["G"], (
         "DataFrame should contain only GPS observations"
@@ -17,7 +19,7 @@ def test_load_prx_file():
 
     # dual constellation, single frequency
     df_prx = load_prx_file(
-        "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv", {"G": ["1C"], "E": ["1X"]}, True
+        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip", {"G": ["1C"], "E": ["1X"]}, True
     )
     assert (df_prx.constellation.unique() == ["G", "E"]).all(), (
         "DataFrame should contain only GPS observations"
@@ -32,7 +34,7 @@ def test_load_prx_file():
 
     # dual constellation, dual frequency
     df_prx = load_prx_file(
-        "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv",
+        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip",
         {"G": ["1C", "2X"], "E": ["1X", "5X"]},
         True,
     )
@@ -73,7 +75,7 @@ def test_iono():
 
 def test_extract_col():
     df_prx = load_prx_file(
-        "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv", {"G": ["1C"]}, True
+        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip", {"G": ["1C"]}, True
     )
     df_red = extract_col(df_prx)
     assert set(df_red.columns) == {

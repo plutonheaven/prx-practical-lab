@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import pytest
 
+from src.helpers import repo_root
+
 
 def test_uncorrected_code_model():
     from src.gnss import obs_model_code
@@ -193,12 +195,12 @@ def test_load_with_elevation_mask():
 
     # single constellation, single frequency
     df_prx = load_prx_file(
-        "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv", {"G": ["1C"]}, True
+        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip", {"G": ["1C"]}, True
     )
     assert len(df_prx) == 30205, "default elevation mask value should be 0"
 
     df_prx = load_prx_file(
-        "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv",
+        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip",
         {"G": ["1C"]},
         True,
         10,
