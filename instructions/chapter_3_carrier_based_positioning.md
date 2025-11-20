@@ -201,3 +201,8 @@ Use the function `helpers.analyze_results` to display various statistics on a `r
 
 ## 3.🏅Compete in the 2025 positioning leaderboard
 Document your best solution in your report. It will be evaluated and ranked against the other student teams' solutions.
+
+## 4. 💰Treasure hunt
+Once you have a working RTK script, apply it to one of the couple of files in the folder `data/treasure_hunt`.
+If the algorithm is working you should see a clue about the treasure hunt...
+Can you find the treasure stash?
