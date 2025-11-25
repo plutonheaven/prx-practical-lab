@@ -24,7 +24,11 @@ dependencies = [
   "tqdm",
   "pyarrow",
   "plotly",
+  "pytest-xdist>=3.8.0",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.ruff]
+extend-exclude = ["notebooks_old", "*.ipynb"]

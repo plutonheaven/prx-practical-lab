@@ -264,6 +264,7 @@ def find_clean_intervals(df, n_intervals: int = 5):
 def repo_root():
     return Path(__file__).parents[1]
 
+
 def make_workspace_dirs(workspace_folder: Path):
     for subfolder in ["figures", "results"]:
         workspace_folder.joinpath(subfolder).mkdir(parents=True, exist_ok=True)
