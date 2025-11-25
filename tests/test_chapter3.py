@@ -43,7 +43,7 @@ def test_differential_carrier_corrections():
 
     df_result = apply_differential_corrections(df1, df2, pos_base)
     assert "L_obs_corr_m" in df_result.columns, (
-        f"'L_obs_corr_m' not in the resulting dataframe "
+        "'L_obs_corr_m' not in the resulting dataframe "
     )
     assert df_result.L_obs_corr_m.to_numpy() == pytest.approx(np.array([0] * 4))
 

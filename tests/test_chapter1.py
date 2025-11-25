@@ -195,7 +195,9 @@ def test_load_with_elevation_mask():
 
     # single constellation, single frequency
     df_prx = load_prx_file(
-        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip", {"G": ["1C"]}, True
+        repo_root() / "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip",
+        {"G": ["1C"]},
+        True,
     )
     assert len(df_prx) == 30205, "default elevation mask value should be 0"
 
