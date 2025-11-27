@@ -42,23 +42,17 @@ def test_load_prx_file():
         {"G": ["1C", "2X"], "E": ["1X", "5X"]},
         True,
     )
-    assert (df_prx.constellation.unique() == ["G", "E"]).all(), (
-        "DataFrame should contain only GPS observations"
+    assert set(df_prx.constellation.unique()) == {"G", "E"}, (
+        "DataFrame should contain only GPS and Galileo observations"
     )
-    assert (
-        df_prx.loc[df_prx.constellation == "G"].rnx_obs_identifier.unique()
-        == [
-            "1C",
-            "2X",
-        ]
-    ).all(), "DataFrame should contain only 1C observations for GPS"
-    assert (
-        df_prx.loc[df_prx.constellation == "E"].rnx_obs_identifier.unique()
-        == [
-            "1X",
-            "5X",
-        ]
-    ).all(), "DataFrame should contain only 1X observations for Galileo"
+    assert set(df_prx.loc[df_prx.constellation == "G"].rnx_obs_identifier.unique()) == {
+        "1C",
+        "2X",
+    }, "DataFrame should contain only 1C observations for GPS"
+    assert set(df_prx.loc[df_prx.constellation == "E"].rnx_obs_identifier.unique()) == {
+        "1X",
+        "5X",
+    }, "DataFrame should contain only 1X observations for Galileo"
     assert len(df_prx) == 99181
 
 

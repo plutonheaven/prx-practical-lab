@@ -1,6 +1,4 @@
 # prx-practical-lab
-## Unzipping data
-After cloning this repository, unzip the files contained in the `data` folder.
 
 ## Python environment creation
 This repo uses the `uv` tool to manage the python virtual environment. Here are the steps to get started:

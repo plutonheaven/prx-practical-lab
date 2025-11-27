@@ -24,7 +24,8 @@ All functions shall be coded in the `src/gnss.py` module.
 ### 1.1. Function: `obs_model_code(df, rx_pos, rx_clk=0)`
 **Summary:**
 - Computes the predicted code observation from data `prx` file in a `pd.DataFrame`.
-- The code observation model is:$$C^{sat}=\lVert \mathbf{r}_{rx} - \mathbf{r}^{sat}\rVert + {dt}_{rx} + s_{rx}^{sat} - ({dt}^{sat}+{dt}^{sat}_{rel}-t_{gd}^{sat})+i_{rx}^{sat}+t_{rx}^{sat}$$
+- The code observation model is:  
+$C^{sat}=\lVert \mathbf{r}_{rx} - \mathbf{r}^{sat}\rVert + {dt}_{rx} + s_{rx}^{sat} - ({dt}^{sat}+{dt}^{sat}_{rel}-t_{gd}^{sat})+i_{rx}^{sat}+t_{rx}^{sat}$
     - $\mathbf{r}_{rx}$ is the receiver Earth Centered Earth Fixed (ECEF) position
     - $\mathbf{r}^{sat}$ is the satellite ECEF position
     - $s_{rx}^{sat}$ is the Sagnac effect (due to Earth rotation during signal propagation)
@@ -56,7 +57,7 @@ import src.prx_tools as prx
 import src.gnss as gnss
 from src.constants import TLSE_2024001_ECEF
 
-df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
+df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip")
 code_predicted = gnss.obs_model_code(df_prx, TLSE_2024001_ECEF)
 ```
 
@@ -90,7 +91,7 @@ import src.prx_tools as prx
 import src.gnss as gnss
 from src.constants import TLSE_2024001_ECEF
 
-df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
+df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip")
 jac = gnss.jacobian_code(df_prx, TLSE_2024001_ECEF)
 ```
 
@@ -117,7 +118,7 @@ uv run pytest tests/test_chapter1.py::test_cov_mat_identical
 import src.prx_tools as prx
 import src.gnss as gnss
 
-df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
+df_prx = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip")
 cov = gnss.obs_covariance_mat(df_prx, "identical")
 ```
 ### 1.4. Function: `wls(obs: np.array, obs_pred: np.array, jac: np.array, cov: np.array)`
@@ -156,7 +157,7 @@ dx_est = gnss.wls(obs, obs_pred, jac, cov)
 ### 1.5. Script: `main_spp.py`
 Now, it is time to use all the functions added to the `src/gnss.py` in a script!
 
-Create a script at the repository root named `main_spp.py` and write the code to compute the SPP solution on the `prx` file ` data/TLSE00FRA_R_20240010000_01D_30S_MO.csv`.  
+Create a script at the repository root named `main_spp.py` and write the code to compute the SPP solution on the `prx` file ` data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip`.  
 Store the estimated position and clock bias for each epoch in a `pd.DataFrame` named `results` and having the columns `"epoch","pos_x","pos_y","pos_z","clk_b"`
 
 When the `prx` file is loaded, the resulting dataframe contains observations for several epochs.  

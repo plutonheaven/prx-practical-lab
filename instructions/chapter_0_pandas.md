@@ -20,7 +20,7 @@ Now that you know how to code using `pandas`, write a python module named `prx_t
 - Filters to keep only healthy satellites.
 
 **Args:**
-- `file: str`, contains the relative path to the `prx` file to open
+- `file: str`, contains the relative path to the zipped `prx` file to open
 - `constellation_filter: dict`, a dictionary with constellation letters ("G","R","E","C") as keys and a list of rinex 3 signal identifier as values. The default value is {"G": ["1C"]}, for GPS L1 C/A.
 - `health_filter: bool`, the default value should be `True` 
 
@@ -43,19 +43,19 @@ import src.prx_tools as prx
 
 # single constellation, single frequency
 data_scsf = prx.load_prx_file(
-  "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv",
+  "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip",
   constellation_filter={"G": ["1C"]},
   health_filter=True,
 )
 # dual constellation, single frequency
 data_dcsf = prx.load_prx_file(
-  "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv",
+  "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip",
   constellation_filter={"G": ["1C"], "E": ["1X"]},
   health_filter=True,
 ) 
 # dual constellation, dual frequency
 data_dcdf = prx.load_prx_file(
-  "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv",
+  "data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip",
   constellation_filter={"G": ["1C","2X"], "E": ["1X","5X"]},
   health_filter=True,
 ) 
@@ -120,5 +120,5 @@ uv run pytest tests/test_chapter0.py::test_extract_col
 > - Don't forget to `import matplotlib.pyplot as plt` at the beginning of the module.
 
 **Test:**  
-You should test it yourself by plotting the number of GPS satellite broadcasting the C1C signal in the file `data/TLSE00FRA_R_20240010000_01D_30S_MO.csv` for an elevation mask [0,10,20,30,40,50]
+You should test it yourself by plotting the number of GPS satellite broadcasting the C1C signal in the file `data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip` for an elevation mask [0,10,20,30,40,50]
 

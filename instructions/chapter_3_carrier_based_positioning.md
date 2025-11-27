@@ -163,8 +163,8 @@ This is due to the much higher accuracy of the carrier observations, compared to
 To apply the WLS considering all observations and states contained in the clean interval, we have to compute the different vectors/matrices for each epoch of the interval, and then correctly stack them.
 
 Create a script `main_rtk.py` at the root of the repository to compute the RTK solution. In this script, write a function that will compute the RTK batch solution for a clean interval, , using:
-- `data/TLSE00FRA_R_20240010000_01D_30S_MO.csv` for the rover receiver data,
-- `data/TLSG00FRA_R_20240010000_01D_30S_MO.csv` for the base receiver data,.
+- `data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip` for the rover receiver data,
+- `data/TLSG00FRA_R_20240010000_01D_30S_MO.csv.zip` for the base receiver data,.
 
 The RTK solution shall be recorded in a `results` dataframe containing the columns `"epoch","pos_x","pos_y","pos_z","clk_b"`.
 

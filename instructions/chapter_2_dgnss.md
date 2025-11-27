@@ -47,8 +47,8 @@ import src.prx_tools as prx
 import src.gnss as gnss
 from src.constants import TLSG_2024001_ECEF
 
-df_rover = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv")
-df_base = prx.load_prx_file("data/TLSG00FRA_R_20240010000_01D_30S_MO.csv")
+df_rover = prx.load_prx_file("data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip")
+df_base = prx.load_prx_file("data/TLSG00FRA_R_20240010000_01D_30S_MO.csv.zip")
 df_rover = gnss.apply_differential_corrections(df_rover, df_base, TLSG_2024001_ECEF)
 ```
 
@@ -91,8 +91,8 @@ The same estimation algorithm as for the SPP solution can be used. Just make sur
 
 ### 1.6. Script: `main_dgnss.py`
 Create a script at the repository root named `main_dgnss.py` and write the code to compute the DGNSS solution, using:
-- `data/TLSE00FRA_R_20240010000_01D_30S_MO.csv` for the rover receiver data,
-- `data/TLSG00FRA_R_20240010000_01D_30S_MO.csv` for the base receiver data,.
+- `data/TLSE00FRA_R_20240010000_01D_30S_MO.csv.zip` for the rover receiver data,
+- `data/TLSG00FRA_R_20240010000_01D_30S_MO.csv.zip` for the base receiver data,.
 
 You may re-use the same script structure as `main_spp.py`, except that you will now use differentially corrected code observations.
 
