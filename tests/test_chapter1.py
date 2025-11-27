@@ -98,9 +98,7 @@ def test_cov_mat_identical():
 
     df = pd.DataFrame(
         {
-            "sat_pos_x_m": [1, 0, 0],
-            "sat_pos_y_m": [0, 1, 0],
-            "sat_pos_z_m": [0, 0, 1],
+            "C_obs_m": [1, 0, 0],
         }
     )
     cov = obs_covariance_mat(df, "identical")
